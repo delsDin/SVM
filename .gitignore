@@ -1,0 +1,13 @@
+# Fichiers temporaires Python
+__pycache__/
+*.py[cod]
+
+# Environnements virtuels
+venv/
+.venv/
+
+# Fichiers Jupyter
+.ipynb_checkpoints/
+
+# Configuration des éditeurs
+.vscode/
