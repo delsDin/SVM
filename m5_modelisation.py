@@ -4,7 +4,11 @@
 # M5 : OPTIMISATION ET EVALUATION FINALE
 # ============================================================
 
-# 1. IMPORTATIONS
+# ============================================================
+# 1. IMPORTATIONS ET CHARGEMENT DES DONNEES
+# ============================================================
+
+import pandas as pd
 
 from sklearn.model_selection import (
     train_test_split,
@@ -25,14 +29,23 @@ from sklearn.metrics import (
     confusion_matrix
 )
 
-from dataset.svm import (
-    pretraitement,
-    X_train,
-    y_train,
-    X_test,
-    y_test
-)
 
+# Chargement des jeux de données prétraités
+train_df = pd.read_csv("dataset/train.csv")
+test_df = pd.read_csv("dataset/test.csv")
+
+# Séparation des variables explicatives et de la cible
+X_train = train_df.drop(columns=["Survived"])
+y_train = train_df["Survived"]
+
+X_test = test_df.drop(columns=["Survived"])
+y_test = test_df["Survived"]
+
+print("Dimensions des données d'entraînement :", X_train.shape)
+print("Dimensions des données de test :", X_test.shape)
+print("\nColonnes utilisées :", list(X_train.columns))
+print("\nValeurs manquantes dans X_train :", X_train.isnull().sum().sum())
+print("Valeurs manquantes dans X_test :", X_test.isnull().sum().sum())
 
 # ============================================================
 # 2. SEPARATION ENTRAINEMENT / VALIDATION
@@ -52,10 +65,8 @@ X_train_local, X_val, y_train_local, y_val = train_test_split(
 # ============================================================
 
 pipeline_svm = Pipeline([
-    ('pretraitement', pretraitement),
     ('classificateur', SVC())
 ])
-
 
 # ============================================================
 # 4. GRILLE DES HYPERPARAMETRES
@@ -140,16 +151,16 @@ print(confusion_matrix(y_val, y_val_pred))
 
 
 # ============================================================
-# 8. REENTRAINEMENT SUR LES 891 OBSERVATIONS
+# 8. REENTRAINEMENT SUR LES 1047 OBSERVATIONS
 # ============================================================
 
-print("\nRéentraînement sur les 891 observations...")
+print("\nRéentraînement sur les 1047 observations...")
 
 meilleur_modele.fit(X_train, y_train)
 
 
 # ============================================================
-# 9. EVALUATION FINALE SUR LES 418 OBSERVATIONS
+# 9. EVALUATION FINALE SUR LES 262 OBSERVATIONS
 # ============================================================
 
 y_test_pred = meilleur_modele.predict(X_test)
@@ -159,7 +170,7 @@ y_test_scores = meilleur_modele.decision_function(X_test)
 
 print("\n======================================")
 print("       EVALUATION FINALE")
-print("       SUR LES 418 OBSERVATIONS")
+print("       SUR LES 262 OBSERVATIONS")
 print("======================================")
 
 print("\nAccuracy :", accuracy_score(y_test, y_test_pred))

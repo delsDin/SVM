@@ -2,201 +2,186 @@
 
 ## 1. Introduction
 
-Dans le cadre du projet de classification portant sur le dataset Titanic, cette étape est consacrée à la mise en œuvre et à l'évaluation de modèles de classification basés sur les machines à vecteurs de support (SVM).
+Ce cinquième module est consacré à la modélisation et à l’évaluation d’un modèle de classification utilisant les machines à vecteurs de support (SVM).
 
-L'objectif est de construire un modèle capable de prédire la survie des passagers à partir des caractéristiques disponibles dans le jeu de données.
+L’objectif est de construire un modèle capable de prédire la survie des passagers du Titanic à partir des caractéristiques disponibles dans le jeu de données.
 
-Le travail de M5 intervient après l'étape de préparation des données réalisée par M4. Il consiste à entraîner plusieurs modèles SVM, à comparer leurs performances, à optimiser leurs hyperparamètres et à évaluer le modèle retenu sur les données de test.
-
-Cette démarche permet d'identifier une configuration adaptée au problème étudié et d'analyser les performances ainsi que les limites du modèle obtenu.
+Après le travail de préparation des données effectué dans le module M4, plusieurs configurations du SVM sont étudiées afin de sélectionner les meilleurs hyperparamètres. Le modèle retenu est ensuite évalué sur un jeu de test indépendant.
 
 ## 2. Présentation des données
 
-Le projet repose sur le dataset Titanic, qui regroupe des informations relatives à 1 309 passagers.
+Le jeu de données Titanic initial contient 1 309 observations.
 
-Les données sont réparties en deux ensembles :
+À l'issue du prétraitement réalisé dans le module M4, les données ont été réparties en deux ensembles :
 
-- **Ensemble d'entraînement :** 891 observations, utilisées pour entraîner les modèles et effectuer la sélection des hyperparamètres.
-- **Ensemble de test :** 418 observations, réservées à l'évaluation finale du modèle retenu.
+- **Données d'entraînement :** 1 047 observations.
+- **Données de test :** 262 observations.
 
-La variable cible est `Survived`. Elle indique si un passager a survécu au naufrage (1) ou non (0).
+La variable cible est `Survived` :
+- `0` : le passager n'a pas survécu.
+- `1` : le passager a survécu.
 
-La préparation des données, réalisée dans le module M4, comprend notamment le traitement des valeurs manquantes, l'encodage des variables catégorielles et la mise à l'échelle des variables numériques.
+Les fichiers `train.csv` et `test.csv` contiennent chacun neuf variables explicatives préparées, ainsi que la variable cible `Survived`.
 
-Ces opérations permettent de disposer de données adaptées à l'entraînement des modèles SVM.
+Les opérations de prétraitement réalisées dans M4 comprennent notamment :
+- Le traitement des valeurs manquantes.
+- L'encodage des variables catégorielles.
+- La normalisation des variables numériques.
+- La transformation de la variable `Fare`.
 
-Il est important de préciser que les 418 observations de test correspondent à la seconde partie du dataset fourni. Elles ne proviennent donc pas d'une séparation aléatoire effectuée sur les 1 309 observations.
+Les données préparées sont utilisées directement dans le module M5.
 
 ## 3. Méthodologie de modélisation
 
-### 3.1. Construction du pipeline
+### 3.1. Chargement des données
 
-Pour la modélisation, nous avons utilisé la classe `Pipeline` de Scikit-learn afin de regrouper les étapes de prétraitement et de classification.
+Les fichiers `dataset/train.csv` et `dataset/test.csv` sont chargés avec la bibliothèque Pandas.
 
-Le pipeline comprend deux éléments :
+La variable cible `Survived` est séparée des variables explicatives afin de constituer les ensembles `X_train`, `y_train`, `X_test` et `y_test`.
 
-- Le prétraitement des données, réalisé à l'aide du transformateur `pretraitement` fourni par le module M4.
-- Le classificateur SVM, implémenté avec la classe `SVC` de Scikit-learn.
-
-Cette organisation permet d'appliquer automatiquement les transformations nécessaires avant chaque apprentissage et chaque prédiction.
+Une vérification des dimensions et des valeurs manquantes est également effectuée.
 
 ### 3.2. Séparation des données d'entraînement
 
-Les 891 observations de l'ensemble d'entraînement ont été divisées en deux sous-ensembles :
+Les 1 047 observations du jeu d'entraînement sont divisées en deux sous-ensembles :
 
-- 80 % pour l'apprentissage du modèle ;
-- 20 % pour la validation de ses performances.
+- **Entraînement interne :** 837 observations.
+- **Validation :** 210 observations.
 
-La fonction `train_test_split` a été utilisée avec `test_size=0.2`, `random_state=42` et `stratify=y_train`.
+La séparation est réalisée avec `train_test_split`, en utilisant :
+- `test_size=0.2` ;
+- `random_state=42` ;
+- `stratify=y_train`.
 
-La stratification permet de conserver une répartition similaire des deux classes dans les ensembles d'apprentissage et de validation. La fixation de la graine aléatoire garantit la reproductibilité de cette séparation.
+La stratification permet de conserver une répartition comparable des classes dans les deux sous-ensembles.
 
-Cette méthode permet d'évaluer les modèles sur des observations qui n'ont pas servi à leur apprentissage.
+### 3.3. Construction du modèle
 
-## 4. Comparaison des noyaux SVM
+Le modèle est construit à l'aide de la classe `SVC` de Scikit-learn.
 
-### 4.1. Noyaux étudiés
+Une pipeline est utilisée pour regrouper le classificateur SVM. Les données ayant déjà été prétraitées dans M4, le pipeline de M5 ne contient plus d'étape de prétraitement.
 
-Trois noyaux ont été testés dans le cadre de la modélisation :
+## 4. Recherche et sélection du noyau
 
-- **Linéaire (`linear`) :** utilisé pour rechercher une frontière de décision linéaire entre les classes.
-- **RBF (`rbf`) :** permet de modéliser des relations non linéaires entre les variables.
-- **Polynomial (`poly`) :** permet de représenter des frontières de décision plus complexes à l'aide de fonctions polynomiales.
+Le SVM propose plusieurs fonctions noyau permettant de traiter différents types de séparations entre les classes.
 
-### 4.2. Comparaison des performances
+Trois noyaux sont étudiés dans la recherche des hyperparamètres :
 
-Les trois modèles ont été évalués sur le même ensemble de validation à l'aide de quatre métriques : l'accuracy, la précision, le rappel et le F1-score.
+- **Linéaire (`linear`) :** adapté aux séparations linéaires.
+- **Radial (`rbf`) :** permet de modéliser des séparations non linéaires.
+- **Polynomial (`poly`) :** permet de représenter des relations polynomiales entre les variables.
 
-| Métrique | Linéaire | RBF | Polynomial |
-|---|---:|---:|---:|
-| Accuracy | 77,65 % | 82,12 % | 80,45 % |
-| Precision | 73,77 % | 83,64 % | 84,00 % |
-| Recall | 65,22 % | 66,67 % | 60,87 % |
-| F1-score | 69,23 % | 74,19 % | 70,59 % |
+Ces trois noyaux sont intégrés dans la grille de recherche afin de comparer différentes configurations.
 
-### 4.3. Analyse des résultats
-
-Les résultats montrent que le noyau RBF obtient les meilleures performances en accuracy (82,12 %) et en F1-score (74,19 %).
-
-Le noyau polynomial présente la meilleure précision (84,00 %), mais son rappel est plus faible (60,87 %).
-
-Le noyau linéaire obtient les performances les moins élevées sur la majorité des métriques étudiées.
-
-Au regard de ces résultats, le noyau RBF a été retenu comme candidat privilégié pour la suite du travail, notamment pour l'optimisation des hyperparamètres.
+La recherche permet finalement de retenir le noyau radial (`rbf`) pour la meilleure configuration obtenue.
 
 ## 5. Optimisation des hyperparamètres
 
-### 5.1. Principe de l'optimisation
+### 5.1. Recherche par GridSearchCV
 
-Afin d'améliorer les performances du modèle SVM, une recherche des meilleurs hyperparamètres a été réalisée.
+La classe `GridSearchCV` est utilisée pour rechercher les meilleurs hyperparamètres du modèle.
 
-Les principaux paramètres étudiés sont :
+La grille comporte 42 configurations différentes, réparties entre les trois noyaux étudiés.
 
-- `C` : contrôle le compromis entre la maximisation de la marge et la pénalisation des erreurs de classification.
-- `gamma` : détermine l'influence des observations d'entraînement dans la construction de la frontière de décision pour les noyaux concernés.
-- `kernel` : définit le type de noyau utilisé par le modèle.
+La validation croisée stratifiée (`StratifiedKFold`) est réalisée avec cinq plis.
 
-### 5.2. Recherche avec GridSearchCV
+Le score F1 est utilisé comme métrique de sélection afin de tenir compte à la fois de la précision et du rappel.
 
-La classe `GridSearchCV` de Scikit-learn a été utilisée pour tester différentes combinaisons d'hyperparamètres.
+Au total, 210 ajustements sont effectués (42 configurations × 5 plis).
 
-La recherche a porté sur 42 configurations. Une validation croisée à 5 plis a été appliquée, avec le F1-score comme métrique de sélection.
+### 5.2. Meilleurs hyperparamètres
 
-Au total, 210 entraînements ont été réalisés (42 configurations × 5 plis).
+La recherche retourne les paramètres suivants :
 
-### 5.3. Meilleure configuration obtenue
+| Hyperparamètre | Valeur retenue |
+|---|---|
+| Noyau (`kernel`) | `rbf` |
+| Paramètre C | `100` |
+| Paramètre gamma | `0.01` |
 
-La recherche a identifié la configuration suivante :
+Le meilleur score F1 obtenu en validation croisée est de **0,7273**.
 
-- `kernel = 'rbf'`
-- `C = 1`
-- `gamma = 'auto'`
+### 5.3. Évaluation sur l'ensemble de validation
 
-Le meilleur F1-score moyen obtenu lors de la validation croisée est de 0,7581.
+Le modèle optimisé est évalué sur les 210 observations de validation.
 
-Sur l'ensemble de validation de 179 observations, le modèle optimisé a obtenu les résultats suivants :
-
-| Métrique | Résultat |
-|---|---:|
-| Accuracy | 82,68 % |
-| Precision | 82,76 % |
-| Recall | 69,57 % |
-| F1-score | 75,59 % |
-
-Ces résultats montrent que la recherche des hyperparamètres a permis d'identifier une configuration offrant un meilleur F1-score sur l'ensemble de validation que les modèles initialement comparés.
-
-## 6. Évaluation finale du modèle
-
-### 6.1. Entraînement et prédiction
-
-Après l'optimisation des hyperparamètres, le meilleur estimateur a été réentraîné sur l'ensemble des 891 observations d'entraînement.
-
-Le modèle obtenu a ensuite été utilisé pour effectuer des prédictions sur les 418 observations réservées au test final.
-
-### 6.2. Résultats de l'évaluation
-
-Les performances obtenues sont les suivantes :
+Les résultats obtenus sont :
 
 | Métrique | Résultat |
 |---|---:|
-| Accuracy | 78,23 % |
-| Precision | 71,90 % |
-| Recall | 69,62 % |
-| F1-score | 70,74 % |
-| ROC-AUC | 79,52 % |
-
-Le modèle a correctement classé 327 observations sur les 418 données de test.
-
-### 6.3. Analyse de la matrice de confusion
+| Accuracy | 80,95 % |
+| Précision | 77,78 % |
+| Rappel | 70,00 % |
+| F1-score | 73,68 % |
 
 La matrice de confusion obtenue est :
 
 | | Prédit : 0 | Prédit : 1 |
 |---|---:|---:|
-| Réel : 0 | 217 | 43 |
-| Réel : 1 | 48 | 110 |
+| Réel : 0 | 114 | 16 |
+| Réel : 1 | 24 | 56 |
 
-On observe que :
+Ces résultats montrent que le modèle obtient une accuracy de 80,95 % sur l'ensemble de validation.
 
-- 217 non-survivants ont été correctement classés.
-- 110 survivants ont été correctement identifiés.
-- 43 non-survivants ont été prédits comme survivants.
-- 48 survivants ont été prédits comme non-survivants.
+## 6. Évaluation finale sur le jeu de test
 
-### 6.4. Interprétation des performances
+Après la sélection des meilleurs hyperparamètres, le modèle est réentraîné sur l'intégralité des 1 047 observations d'entraînement.
 
-L'accuracy de 78,23 % indique que le modèle a correctement classé environ 78 % des observations de test.
+Il est ensuite évalué sur les 262 observations du jeu de test, qui n'ont pas été utilisées pour sélectionner les hyperparamètres.
 
-La précision de 71,90 % signifie que parmi les passagers prédits comme survivants, environ 72 % ont effectivement survécu.
+### 6.1. Résultats obtenus
 
-Le rappel de 69,62 % montre que le modèle a identifié environ 70 % des survivants réels.
+| Métrique | Résultat |
+|---|---:|
+| Accuracy | 81,30 % |
+| Précision | 78,65 % |
+| Rappel | 70,00 % |
+| F1-score | 74,07 % |
+| ROC-AUC | 83,94 % |
 
-Enfin, le F1-score de 70,74 % traduit un équilibre entre la précision et le rappel. Le ROC-AUC de 79,52 % indique également une capacité de discrimination intéressante entre les deux classes.
+### 6.2. Matrice de confusion
 
-## 7. Limites du modèle
+La matrice de confusion obtenue sur le jeu de test est :
 
-Malgré les performances obtenues, le modèle présente certaines limites.
+| | Prédit : 0 | Prédit : 1 |
+|---|---:|---:|
+| Réel : 0 | 143 | 19 |
+| Réel : 1 | 30 | 70 |
 
-Tout d'abord, les résultats de l'évaluation finale sont inférieurs à ceux obtenus sur l'ensemble de validation. L'accuracy passe de 82,68 % à 78,23 %, tandis que le F1-score passe de 75,59 % à 70,74 %. Cette différence montre que les performances observées pendant la validation ne se retrouvent pas entièrement sur les données de test.
+Sur les 262 observations :
+- 143 passagers n'ayant pas survécu sont correctement classés.
+- 70 passagers ayant survécu sont correctement classés.
+- 19 passagers n'ayant pas survécu sont prédits à tort comme survivants.
+- 30 passagers ayant survécu sont prédits à tort comme non-survivants.
 
-Ensuite, le modèle commet encore des erreurs de classification, notamment 48 survivants prédits comme non-survivants et 43 non-survivants prédits comme survivants.
+Le modèle réalise donc **213 prédictions correctes sur 262**, soit une accuracy de 81,30 %.
 
-Par ailleurs, les performances dépendent des variables disponibles dans le dataset et des choix effectués lors du prétraitement. D'autres transformations ou combinaisons de variables pourraient éventuellement améliorer les résultats.
+Le score ROC-AUC de 83,94 % indique également une capacité intéressante du modèle à distinguer les deux classes.
 
-Enfin, la recherche des hyperparamètres s'est limitée aux configurations définies dans la grille de recherche. L'exploration d'autres paramètres ou la comparaison avec d'autres algorithmes pourrait permettre d'obtenir de meilleures performances.
+## 7. Analyse des résultats et limites
+
+Les résultats obtenus montrent que le modèle SVM optimisé atteint une accuracy de 81,30 % sur le jeu de test, avec un F1-score de 74,07 %.
+
+Le score F1 obtenu sur le jeu de test est légèrement supérieur à celui obtenu sur l'ensemble de validation (74,07 % contre 73,68 %).
+
+Le rappel de 70 % indique que le modèle identifie correctement 70 des 100 passagers ayant survécu dans le jeu de test. Il reste donc des survivants qui ne sont pas correctement détectés.
+
+Plusieurs limites doivent être prises en compte :
+
+- Le modèle commet encore des erreurs de classification sur les deux classes.
+- La recherche des hyperparamètres est limitée aux 42 configurations définies dans la grille.
+- Les performances dépendent des variables disponibles et des choix de prétraitement effectués.
+
+**Point méthodologique :** le prétraitement de M4 a été ajusté sur les 1 047 observations d'entraînement avant la séparation interne de M5 et la validation croisée. Les statistiques de prétraitement ont donc été calculées sans tenir compte des plis internes de M5. Cela peut introduire une légère fuite d'information dans la validation interne et la validation croisée. Pour une évaluation méthodologiquement plus stricte, le prétraitement devrait être intégré au pipeline évalué par validation croisée, afin d'être ajusté séparément dans chaque pli.
+
+Le jeu de test final de 262 observations reste néanmoins distinct de la recherche des hyperparamètres de M5.
 
 ## 8. Conclusion
 
-Ce travail a permis de mettre en œuvre un modèle de classification basé sur les machines à vecteurs de support (SVM) afin de prédire la survie des passagers du Titanic.
+Ce module a permis de mettre en œuvre un modèle SVM pour prédire la survie des passagers du Titanic.
 
-La comparaison des différents noyaux a montré que le noyau RBF offrait les meilleurs résultats lors de la première évaluation. L'optimisation avec GridSearchCV a ensuite permis de retenir la configuration suivante : `kernel='rbf'`, `C=1` et `gamma='auto'`.
+La recherche par GridSearchCV a permis d'identifier la configuration suivante : noyau radial (`rbf`), `C=100` et `gamma=0.01`.
 
-Sur les 418 observations réservées à l'évaluation finale, le modèle a obtenu une accuracy de **78,23 %** et un F1-score de **70,74 %**. Ces résultats montrent que le modèle parvient à effectuer des prédictions pertinentes, même si certaines erreurs restent présentes.
+Après réentraînement sur les 1 047 observations d'entraînement, le modèle a obtenu une accuracy de 81,30 %, un F1-score de 74,07 % et un ROC-AUC de 83,94 % sur le jeu de test.
 
-Cette expérience nous a également permis de comprendre l'importance du choix du noyau, du réglage des hyperparamètres et de l'utilisation de plusieurs métriques pour évaluer un modèle de classification.
-
-Des améliorations pourraient être envisagées, notamment en testant d'autres combinaisons de paramètres, en travaillant davantage sur les variables utilisées et en comparant le SVM à d'autres algorithmes de classification.
-
-En conclusion, cette étape a permis de construire, d'optimiser et d'évaluer un modèle SVM sur le jeu de données Titanic, tout en mettant en pratique les principales étapes d'un processus de modélisation en apprentissage automatique.
-
-
+Ces résultats montrent que le SVM constitue une approche intéressante pour cette tâche de classification. Toutefois, les erreurs de prédiction et les limites méthodologiques identifiées indiquent que des améliorations restent possibles.
