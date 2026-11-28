@@ -11,3 +11,5 @@ venv/
 
 # Configuration des éditeurs
 .vscode/
+
+_tmp_*
